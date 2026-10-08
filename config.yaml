@@ -329,6 +329,7 @@ kits:
   ah: 7.5
   msrp: 659
   bare: 469
+  resale: 225
   cat: mower
   size: 21
   prop: push
@@ -391,6 +392,7 @@ kits:
   ah: 6
   msrp: 499
   bare: 439
+  resale: 175
   cat: mower
   size: 21
   prop: push
@@ -400,6 +402,7 @@ kits:
   ah: 4
   msrp: 479
   bare: 439
+  resale: 175
   cat: mower
   size: 21
   prop: push
@@ -594,6 +597,7 @@ kits:
   - mst1603(?![a-z0-9]|-[0-9a-z])
   ah: 4
   msrp: 379
+  cat: multihead
 - name: CS1201 12in Chain Saw Kit (2.5Ah)
   match:
   - cs1201(?![a-z0-9]|-[0-9a-z])
@@ -680,3 +684,27 @@ kits:
   - mb1005\-2(?![a-z0-9])
   ah: 15
   msrp: 2749
+- name: ST1502LB 15in String Trimmer + 530CFM Blower Combo (2.5Ah) [msrp approx]
+  match:
+  - st1502lb(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 249
+  cat: combo
+- name: LB6703 670CFM Blower Kit (4Ah) [msrp approx]
+  match:
+  - lb6703(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 259
+  cat: blower
+  size: 670
+- name: MHC1603 Multi-Head Trimmer/Edger Combo (4Ah)
+  match:
+  - mhc1603(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 430
+  cat: multihead
+- name: 615CFM Blower + 15in Trimmer Combo (2.5Ah, model unknown) [msrp approx]
+  match: []
+  ah: 2.5
+  msrp: 299
+  cat: combo

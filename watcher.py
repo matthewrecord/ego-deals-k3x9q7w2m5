@@ -88,7 +88,9 @@ def fetch(src):
 
 NOT_A_PRICE_RE = re.compile(r"\s*(off|discount|savings?|rebate|gift ?card|credit|shipping)\b", re.I)
 EGO_RE = re.compile(r"\bego\b", re.I)
-BARE_RE = re.compile(r"tool[- ]only|bare[- ]tool|\bbare\b|without (a )?batter|no batter|battery not included", re.I)
+BARE_RE = re.compile(
+    r"tool[- ]only|bare[- ]tool|\bbare\b|without (a )?batter|no batter|"
+    r"batter(?:y|ies)\b[^$]{0,30}\bnot included|not included[^$]{0,20}batter", re.I)
 
 
 def parse_price(title):
@@ -124,6 +126,7 @@ def kit_resale(kit, cfg):
 
 # --- Fallback: identify a kit from a descriptive title with no model number ------------------
 CAT_RES = [  # order matters: first hit wins
+    ("multihead", re.compile(r"multi.?head")),
     ("zeroturn", re.compile(r"zero.?turn")),
     ("tractor", re.compile(r"lawn tractor|\btractor\b")),
     ("mower", re.compile(r"mower")),
@@ -142,6 +145,7 @@ BUNDLE_RE = re.compile(r"\b(extra|additional|bonus|spare)\b")
 
 
 def title_total_ah(t):
+    t = re.sub(r"\btwo\b", "2", re.sub(r"\bthree\b", "3", t))
     total = 0.0
     for m in AH_ALL.finditer(t):
         total += (int(m.group(1)) if m.group(1) else 1) * float(m.group(2))
@@ -171,29 +175,44 @@ def title_prop(t, cat):
     return None
 
 
+BATTERY_YES_RE = re.compile(
+    r"batter(?:y|ies) (?:included|&|and|,)|(?:with|w/|includes?|including)\s*(?:a |the |\(?\d\)? )?(?:56 ?v(?:olt)? )?batter|"
+    r"batteries included|battery,? charger")
+
+
 def infer_kits(title, cfg):
-    """Best-effort catalog candidates for a title with no model number (empty list if unsure)."""
+    """Best-effort catalog candidates for a title with no model number.
+
+    Returns (candidates, ah_assumed). Empty list if unsure. When the title names no Ah but clearly says a
+    battery is included, the catalog's own Ah is used, but only if every candidate agrees on it."""
     t = title.lower()
-    if BUNDLE_RE.search(t):  # "plus 1 extra battery" etc. -> not a catalog kit
-        return []
+    if BUNDLE_RE.search(t) or BARE_RE.search(t):  # extra-battery bundles / tool-only listings
+        return [], False
     cats = [c for c, r in CAT_RES if r.search(t)]
-    if not cats or ("trimmer" in cats and "blower" in cats):
-        return []
-    cat, ah = cats[0], title_total_ah(t)
+    if not cats:
+        return [], False
+    cat = "combo" if ("trimmer" in cats and "blower" in cats and cats[0] != "multihead") else cats[0]
+    ah = title_total_ah(t)
+    assumed = False
     if not ah:
-        return []
+        if not BATTERY_YES_RE.search(t):
+            return [], False
+        assumed = True
     size, prop = title_size(t, cat), title_prop(t, cat)
     cands = [
         k for k in cfg["kits"]
-        if k.get("cat") == cat and abs(k["ah"] - ah) < 0.05
+        if k.get("cat") == cat
+        and (assumed or abs(k["ah"] - ah) < 0.05)
         and (size is None or k.get("size") in (None, size))
         and (prop is None or k.get("prop") in (None, prop))
     ]
+    if assumed and len({k["ah"] for k in cands}) > 1:
+        return [], False  # catalog candidates disagree on battery size: too ambiguous
     for term, tag in ((r"select cut xp|\bxp\b", "xp"), (r"peak power", "peak")):
         if re.search(term, t):
             tagged = [k for k in cands if tag in k.get("tags", [])]
             cands = tagged or cands
-    return cands
+    return cands, assumed
 
 
 def evaluate(title, cfg):
@@ -211,12 +230,13 @@ def evaluate(title, cfg):
     if not kit and not EGO_RE.search(t):
         return None  # model-number matches don't need the word "ego"; everything else does
     if not kit:
-        cands = infer_kits(title, cfg)
+        cands, assumed = infer_kits(title, cfg)
         # a price far below list means a mis-parse (e.g. "$20 off") or a wrong match: skip
         cands = [k for k in cands if price >= 0.35 * k["msrp"]]
         if cands:
             kit = min(cands, key=lambda k: kit_resale(k, cfg))  # highest $/Ah = fewest false alarms
-            inferred = [k["name"] for k in cands]
+            inferred = [k["name"] + (" [battery size not in title; taken from catalog]" if assumed else "")
+                        for k in cands]
     if kit and (BARE_RE.search(t) or price < 0.35 * kit["msrp"]):
         return None  # bare-tool listing, or a price too far below list to be this kit
     if kit:
@@ -339,6 +359,8 @@ def main():
                 continue
             evaluated += 1
             label, ah, resale, price, cost, inferred = result
+            if inferred and ah < 5:  # low-confidence matches on small packs aren't worth verifying
+                continue
             th = thresholds_for(ah, cfg)
             level = tier(cost, th)
             if not level:
@@ -374,7 +396,7 @@ def main():
         msg = f"{ok_sources}/{len(cfg['sources'])} sources OK; {evaluated} EGO listings evaluated this run."
         if um:
             msg += ("\n\nEGO listings seen this week that I couldn't match to the catalog "
-                    "(new models? matching gap?):\n" + "\n".join(f"${v['price']:,.0f}  {v['title'][:90]}" for v in um))
+                    "(new models? matching gap?):\n" + "\n".join(f"${v['price']:,.0f}  {v['title'][:90]}\n{v['link'].split('?')[0]}" for v in um))
         notify("EGO watcher: weekly digest" if um else "EGO watcher alive", msg,
                priority="low" if um else "min", tags="green_circle")
         state["last_heartbeat"] = now().isoformat()
