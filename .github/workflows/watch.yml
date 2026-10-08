@@ -1,0 +1,49 @@
+name: ego-deal-watch
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"   # every 30 min (GitHub may delay runs a few minutes)
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: "Send a test notification instead of a normal run"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ego-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Run watcher
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          if [ "${{ github.event.inputs.test_notification }}" = "true" ]; then
+            python watcher.py --test
+          else
+            python watcher.py
+          fi
+
+      - name: Save state
+        run: |
+          git config user.name "ego-watcher"
+          git config user.email "ego-watcher@users.noreply.github.com"
+          git add state.json
+          git diff --staged --quiet || (git commit -m "Update watcher state" && git push)
