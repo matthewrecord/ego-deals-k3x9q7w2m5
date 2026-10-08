@@ -1,0 +1,682 @@
+# =============================================================================
+# MAINTENANCE GUIDE  (for the human AND for any LLM asked to update this file)
+# =============================================================================
+# WHAT THIS IS: config for watcher.py, which runs on GitHub Actions every ~30 min,
+# reads deal feeds (Slickdeals, r/ToolDeals), and sends an ntfy push when an EGO
+# listing's net cost per Ah is low:   (price - est. resale of non-battery parts) / total Ah
+# GOAL: the owner is rebuilding a 56V battery supply, so cheap Ah is the point.
+#
+# TO REFRESH THE CATALOG (about yearly, or when the weekly digest shows new models):
+#  1. Get current US list/dealer prices, battery sizes and bare-tool prices from a
+#     retailer catalog (e.g. toolup.com/collections/ego, acehardware.com, egopowerplus.com).
+#     Official egopowerplus.com pages list models but NOT prices or kit contents.
+#  2. For each kit set: name, match, ah (TOTAL Ah of all batteries in the kit),
+#     msrp, and bare (bare-tool price) if known. Add resale only to override the formula.
+#  3. Add cat/size/prop/tags so model-less titles can be matched:
+#       cat  = mower|zeroturn|tractor|snow|pressure|blower|chainsaw|hedge|polesaw|trimmer|shovel|auger
+#       size = inches (mowers, saws, snow, hedge), CFM (blowers), PSI (pressure washers)
+#       prop = sp|push for mowers; '1'|'2' (stage) for snow blowers
+#       tags = xp (Select Cut XP / XP series), peak (Peak Power)
+#  4. match is a list of regexes tested on the LOWERCASED listing title. Use the model
+#     number with a lookahead so prefixes don't collide, e.g. lm2135(?![a-z0-9]|-[0-9a-z])
+#     (so LM2135 won't match LM2135SP). For models ending in -2 use the form
+#     lm2156sp\-2(?![a-z0-9]).
+#  5. Set catalog_checked below to today's date.
+#
+# PITFALLS ALREADY HIT:
+#  - Retailers write "4Ah (2P)" or "2P" for the CELL CONFIGURATION, not two batteries.
+#    CS1613 and CS1803 each ship with ONE 4.0Ah battery. Confirm the battery COUNT from a
+#    second source (a Slickdeals title or the retailer's product title) before trusting it.
+#  - A "-2" model suffix usually means a two-battery kit (LM2134SP-2, LM2156SP-2).
+#  - Dealer prices drift; use one consistent source. msrp only feeds the resale estimate
+#    (and a sanity floor: prices under 35% of msrp are ignored as mis-parses).
+#  - Unknown or ambiguous Ah or price: leave the kit out rather than guess.
+#
+# BEFORE COMMITTING:
+#  - Load this file with yaml.safe_load. Confirm every kit's title matches itself and that no
+#    kit's regex catches another kit's model number (watcher.match_kit on "EGO <model> $100").
+#  - Confirm nothing alerts at list price: watcher.evaluate("EGO <model> kit $<msrp>", cfg)
+#    must produce no tier for any kit.
+#  - Dry run: DRY_RUN=1 python watcher.py   (prints alerts, sends nothing, writes no state).
+#  - Then commit config.yaml to the repo; the next scheduled run picks it up.
+#
+#  BARE TOOLS (bare_tools section): tools that never come with batteries get a plain
+#  percent-off-typical-price check instead of the $/Ah math. To add one: name, match regexes
+#  (same lookahead style as kits), and ref = typical new US price. Make sure no bare_tools
+#  regex also matches a kit (a kit title would be skipped as a bare tool); the bare check runs first.
+#  Only add tools that truly never ship in a kit; bare versions of kit tools (e.g. LM2150SP) are
+#  deliberately not here.
+#
+# TUNING: thresholds and small_battery_thresholds are $/Ah bars (lower = pickier).
+#  resale_factor (0.65) and bare_estimate_per_ah (28) drive every resale estimate.
+#  Don't edit watcher.py for routine updates; config.yaml is the only file that needs it.
+# =============================================================================
+
+# Net harvesting cost per Ah = (kit price - resale) / total Ah
+thresholds:
+  strong: 25                    # high-priority alert at or below this $/Ah
+  watch: 30                     # normal-priority alert at or below this $/Ah
+  realert_if_price_drops_pct: 3 # re-alert on a listing only if the price falls by this much
+
+# Stricter bar for small packs: kits or standalone batteries with total capacity under below_ah.
+small_battery_thresholds:
+  below_ah: 5
+  strong: 15
+  watch: 20
+
+# Tools that never ship in a battery kit (fans, commercial line, Multi-Head attachments, etc.).
+# No battery to harvest, so the only question is how far below its normal price a listing is.
+# A listing at or below ref x (1 - deep_discount_pct/100) triggers a DEEP DISCOUNT alert. Refurbished /
+# reconditioned listings count too (typically 30-35% off, so they only alert if deeper than the bar).
+# Override per tool with pct: N. ref = typical new US dealer price (Oct 2026).
+bare_tools:
+  deep_discount_pct: 40
+  tools:
+  - name: FN1000 10in Misting Fan
+    match:
+    - 'fn1000(?![a-z0-9])'
+    alt:  # descriptive titles; only used when the title also says EGO
+    - '10.{0,3}(in|inch|\")?\s?(oscillating )?misting fan'
+    ref: 199
+  - name: FN1800 18in Misting Fan
+    match:
+    - 'fn180[04](?![a-z0-9])'
+    alt:  # descriptive titles; only used when the title also says EGO
+    - '18.{0,3}(in|inch|\")?\s?misting fan'
+    ref: 309
+  - name: WDV0900 Wet/Dry Vacuum
+    match:
+    - 'wdv0900(?![a-z0-9])'
+    alt:  # descriptive titles; only used when the title also says EGO
+    - 'wet.?/?\s?dry vac'
+    ref: 329
+  - name: LT0300 3000lm Prism Light
+    match:
+    - 'lt0300(?![a-z0-9])'
+    ref: 109
+  - name: STX3800 Commercial String Trimmer
+    match:
+    - 'stx3800(?![a-z0-9])'
+    ref: 429
+  - name: STX4500 Commercial 17.5in String Trimmer
+    match:
+    - 'stx4500(?![a-z0-9])'
+    ref: 329
+  - name: LBX6000 Commercial 600CFM Blower
+    match:
+    - 'lbx6000(?![a-z0-9])'
+    ref: 429
+  - name: LBPX8000 Commercial 800CFM Backpack Blower
+    match:
+    - 'lbpx8000(?![a-z0-9])'
+    ref: 439
+  - name: CSX5000 Commercial 20in Chain Saw
+    match:
+    - 'csx5000(?![a-z0-9])'
+    ref: 439
+  - name: PSX2510 Commercial 10in Pole Saw
+    match:
+    - 'psx2510(?![a-z0-9])'
+    ref: 439
+  - name: HTX5300-PA Commercial Pole Hedge Trimmer
+    match:
+    - 'htx5300'
+    ref: 489
+  - name: BCX4500 Commercial Brush Cutter
+    match:
+    - 'bcx4500(?![a-z0-9])'
+    ref: 449
+  - name: EDX2000 Commercial 8in Straight Edger
+    match:
+    - 'edx2000(?![a-z0-9]|-c)'
+    ref: 439
+  - name: EDX2000-C Commercial 8in Curved Edger
+    match:
+    - 'edx2000-c(?![a-z0-9])'
+    ref: 389
+  - name: LMX5300SP Commercial 22in Mower
+    match:
+    - 'lmx5300sp(?![a-z0-9])'
+    ref: 1429
+  - name: LMX7600SP Commercial 30in Mower
+    match:
+    - 'lmx7600sp(?![a-z0-9])'
+    ref: 1999
+  - name: PH1420 Multi-Head Power Head
+    match:
+    - 'ph14(00|20)(?![a-z0-9])'
+    ref: 189
+  - name: BCA1220 Multi-Head Brush Cutter Attachment
+    match:
+    - 'bca1220(?![a-z0-9])'
+    ref: 190
+  - name: CTA9500 Multi-Head Cultivator Attachment
+    match:
+    - 'cta9500(?![a-z0-9])'
+    ref: 239
+  - name: ME0820 Multi-Head 8in Edger
+    match:
+    - 'me0820(?![a-z0-9])'
+    ref: 219
+  - name: HTA2020 Multi-Head Hedge Trimmer Attachment
+    match:
+    - 'hta2020(?![a-z0-9])'
+    ref: 239
+  - name: BBA2100 Multi-Head Bristle Brush Attachment
+    match:
+    - 'bba2100(?![a-z0-9])'
+    ref: 269
+  - name: SSA1220 Multi-Head Snow Shovel Attachment
+    match:
+    - 'ssa1220(?![a-z0-9])'
+    ref: 267
+  - name: STA1600 Multi-Head String Trimmer Attachment
+    match:
+    - 'sta1600(?![a-z0-9])'
+    ref: 169
+  - name: EP1000 Carbon Fiber Extension Pole
+    match:
+    - 'ep1000(?![a-z0-9])'
+    ref: 142
+  - name: PST3040 3000W Power Nexus
+    match:
+    - 'pst3040(?![a-z0-9])'
+    ref: 660
+  - name: MB1000 Mini Bike
+    match:
+    - 'mb1000(?![a-z0-9])'
+    ref: 1980
+  - name: IG0800 Ice Auger
+    match:
+    - 'ig0800(?![a-z0-9])'
+    ref: 439
+  - name: SK1800 Bluetooth Speaker
+    match:
+    - 'sk1800(?![a-z0-9])'
+    ref: 329
+  - name: BH1001 Backpack Link
+    match:
+    - 'bh1001(?![a-z0-9])'
+    ref: 219
+
+catalog_checked: 2026-10-07       # when kit prices below were last verified
+catalog_stale_after_days: 365   # then remind you (monthly) to refresh them
+fail_alert_after_runs: 12       # alert once if a source fails this many runs in a row (~6h)
+heartbeat_days: 7               # weekly "still alive" ping (silent priority)
+forget_after_days: 60
+
+# Deal feeds. Add more any time (any RSS/Atom URL works).
+# NOTE: Reddit often blocks cloud IPs; if it fails you'll get a failure alert and can just delete it.
+sources:
+  - name: Slickdeals - EGO power tools
+    url: https://slickdeals.net/newsearch.php?q=ego+power+tools&searcharea=deals&searchin=first&rss=1
+  - name: Slickdeals - EGO battery
+    url: https://slickdeals.net/newsearch.php?q=ego+battery&searcharea=deals&searchin=first&rss=1
+  - name: Slickdeals - EGO kit
+    url: https://slickdeals.net/newsearch.php?q=ego+kit&searcharea=deals&searchin=first&rss=1
+  - name: Reddit r/ToolDeals - EGO
+    url: https://www.reddit.com/r/ToolDeals/search.rss?q=ego&restrict_sr=on&sort=new
+  # Optional, UNTESTED: used listings near you (Craigslist RSS; titles carry the price). Uncomment to try;
+  # if it gets blocked you'll just get a source-failing alert and can delete it.
+  # - name: Craigslist Long Island - EGO
+  #   url: https://longisland.craigslist.org/search/sss?query=ego+power&format=rss
+
+# Standalone batteries (no resale offset). Titles that also mention a tool are skipped.
+battery_only:
+  enabled: true
+  exclude_if: 'mower|blower|trimmer|saw|washer|snow|fan|kit|combo|string|hedge|pole|mulcher|tiller'
+
+# --- Kit catalog -------------------------------------------------------------
+# resale (what you'd net selling the non-battery parts) is computed as:
+#     resale_factor x (bare tool price)
+# where bare = the known bare-tool price, else (kit price - bare_estimate_per_ah x Ah).
+# Both numbers come from your own HPW3204-2 research ($375 on a $549 bare tool = ~68%;
+# retail kit-vs-bare gaps work out to roughly $28/Ah). Prices are approximate US dealer
+# prices seen Oct 2026. An explicit `resale:` on a kit overrides the formula.
+resale_factor: 0.65
+bare_estimate_per_ah: 28
+kits:
+- name: HPW3204-2 3200 PSI Pressure Washer Kit (2x6Ah)
+  match:
+  - hpw3204(-2)?(?![a-z0-9])
+  - 3200\s?psi.*(pressure washer|kit)
+  ah: 12.0
+  msrp: 879
+  bare: 549
+  resale: 375
+  cat: pressure
+  size: 3200
+- name: LM2156SP-2 21in Select Cut XP SP Kit (2x10Ah)
+  match:
+  - lm2156sp\-2(?![a-z0-9])
+  ah: 20
+  msrp: 1399
+  bare: 639
+  cat: mower
+  size: 21
+  prop: sp
+  tags:
+  - xp
+- name: LM2156SP 21in Select Cut XP SP Kit (10Ah)
+  match:
+  - lm2156sp(?![a-z0-9]|-[0-9a-z])
+  - select cut xp.*10(\.0)?\s?ah
+  ah: 10
+  msrp: 879
+  bare: 639
+  cat: mower
+  size: 21
+  prop: sp
+  tags:
+  - xp
+- name: LM2206SP 22in Aluminum Deck Select Cut SP Kit (10Ah)
+  match:
+  - lm2206sp(?![a-z0-9]|-[0-9a-z])
+  ah: 10
+  msrp: 1299
+  bare: 999
+  cat: mower
+  size: 22
+  prop: sp
+- name: LM2236SP 22in Super Composite Select Cut SP Kit (10Ah)
+  match:
+  - lm2236sp(?![a-z0-9]|-[0-9a-z])
+  ah: 10
+  msrp: 999
+  cat: mower
+  size: 22
+  prop: sp
+- name: LM2244SP-2 22in Super Composite Peak Power SP Kit (2x6Ah)
+  match:
+  - lm2244sp\-2(?![a-z0-9])
+  ah: 12
+  msrp: 1099
+  bare: 769
+  cat: mower
+  size: 22
+  prop: sp
+  tags:
+  - peak
+- name: LM3004SP-2 30in Dual Motor SP Kit (2x6Ah)
+  match:
+  - lm3004sp\-2(?![a-z0-9])
+  ah: 12
+  msrp: 1799
+  bare: 1499
+  cat: mower
+  size: 30
+  prop: sp
+- name: LM2142SP 21in SP Mower Kit (2x5Ah)
+  match:
+  - lm2142sp(?![a-z0-9]|-[0-9a-z])
+  ah: 10
+  msrp: 799
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2135SP 21in Select Cut SP Kit (7.5Ah)
+  match:
+  - lm2135sp(?![a-z0-9]|-[0-9a-z])
+  ah: 7.5
+  msrp: 749
+  bare: 609
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2135 21in Select Cut Push Kit (7.5Ah)
+  match:
+  - lm2135(?![a-z0-9]|-[0-9a-z])
+  ah: 7.5
+  msrp: 659
+  bare: 469
+  cat: mower
+  size: 21
+  prop: push
+- name: LM2134SP-2 21in Select Cut SP Kit (2x6Ah)
+  match:
+  - lm2134sp\-2(?![a-z0-9])
+  ah: 12
+  msrp: 879
+  bare: 609
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2132SP-2 21in Select Cut SP Kit (2x4Ah)
+  match:
+  - lm2132sp\-2(?![a-z0-9])
+  ah: 8
+  msrp: 779
+  bare: 609
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2125SP 21in SP Touch Drive Kit (7.5Ah)
+  match:
+  - lm2125sp(?![a-z0-9]|-[0-9a-z])
+  ah: 7.5
+  msrp: 599
+  bare: 499
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2123SP-2 21in SP Touch Drive Kit (4Ah+6Ah)
+  match:
+  - lm2123sp\-2(?![a-z0-9])
+  ah: 10
+  msrp: 769
+  bare: 499
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2122SP-2 21in SP Touch Drive Kit (2x4Ah)
+  match:
+  - lm2122sp\-2(?![a-z0-9])
+  ah: 8
+  msrp: 699
+  bare: 499
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2114SP 21in SP Kit (6Ah)
+  match:
+  - lm2114sp(?![a-z0-9]|-[0-9a-z])
+  ah: 6
+  msrp: 529
+  cat: mower
+  size: 21
+  prop: sp
+- name: LM2114 21in Push Kit (6Ah)
+  match:
+  - lm2114(?![a-z0-9]|-[0-9a-z])
+  ah: 6
+  msrp: 499
+  bare: 439
+  cat: mower
+  size: 21
+  prop: push
+- name: LM2112 21in Push Kit (4Ah)
+  match:
+  - lm2112(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 479
+  bare: 439
+  cat: mower
+  size: 21
+  prop: push
+- name: LM2102SP-A 21in SP Kit (2x4Ah)
+  match:
+  - lm2102sp\-a(?![a-z0-9])
+  ah: 8
+  msrp: 649
+  cat: mower
+  size: 21
+  prop: sp
+- name: ZT4204L 42in Zero Turn Kit (4x10Ah)
+  match:
+  - zt4204l(?![a-z0-9]|-[0-9a-z])
+  ah: 40
+  msrp: 5499
+  cat: zeroturn
+  size: 42
+- name: ZT4214L Z6 42in Zero Turn Kit (6x6Ah)
+  match:
+  - zt4214l(?![a-z0-9]|-[0-9a-z])
+  ah: 36
+  msrp: 5299
+  cat: zeroturn
+  size: 42
+- name: ZT4215S Z6 42in e-STEER Zero Turn Kit (4x6Ah+2x10Ah)
+  match:
+  - zt4215s(?![a-z0-9]|-[0-9a-z])
+  ah: 44
+  msrp: 5799
+  cat: zeroturn
+  size: 42
+- name: ZT5216L Z6 52in Zero Turn Kit (6x10Ah)
+  match:
+  - zt5216l(?![a-z0-9]|-[0-9a-z])
+  ah: 60
+  msrp: 6499
+  cat: zeroturn
+  size: 52
+- name: TR4204 T6 42in Tractor Kit (6x6Ah)
+  match:
+  - tr4204(?![a-z0-9]|-[0-9a-z])
+  ah: 36
+  msrp: 4399
+  cat: tractor
+  size: 42
+- name: SNT2124 21in Single-Stage Peak Power Kit (2x6Ah)
+  match:
+  - snt2124(?![a-z0-9]|-[0-9a-z])
+  ah: 12
+  msrp: 822
+  cat: snow
+  size: 21
+  prop: '1'
+  tags:
+  - peak
+- name: SNT2134 21in Single-Stage Peak Power Kit (2x6Ah)
+  match:
+  - snt2134(?![a-z0-9]|-[0-9a-z])
+  ah: 12
+  msrp: 955
+  cat: snow
+  size: 21
+  prop: '1'
+  tags:
+  - peak
+- name: SNT2112 21in Dual Port Snow Blower Kit (2x5Ah)
+  match:
+  - snt2112(?![a-z0-9]|-[0-9a-z])
+  ah: 10
+  msrp: 749
+  cat: snow
+  size: 21
+  prop: '1'
+  tags:
+  - peak
+- name: SNT2125AP 21in Auger Propelled Kit (2x7.5Ah)
+  match:
+  - snt2125ap(?![a-z0-9]|-[0-9a-z])
+  ah: 15
+  msrp: 1099
+  bare: 659
+  cat: snow
+  size: 21
+  prop: '1'
+- name: SNT2405 24in 2-Stage Kit (2x7.5Ah)
+  match:
+  - snt2405(?![a-z0-9]|-[0-9a-z])
+  ah: 15
+  msrp: 1649
+  cat: snow
+  size: 24
+  prop: '2'
+  tags:
+  - peak
+- name: SNT2425 24in 2-Stage Kit (2x7.5Ah)
+  match:
+  - snt2425(?![a-z0-9]|-[0-9a-z])
+  ah: 15
+  msrp: 1728
+  cat: snow
+  size: 24
+  prop: '2'
+  tags:
+  - peak
+- name: SNT2416 24in XP 2-Stage Kit (2x10Ah)
+  match:
+  - snt2416(?![a-z0-9]|-[0-9a-z])
+  ah: 20
+  msrp: 1799.99
+  cat: snow
+  size: 24
+  prop: '2'
+  tags:
+  - peak
+  - xp
+- name: SNT2807 28in 2-Stage Kit (2x12Ah)
+  match:
+  - snt2807(?![a-z0-9]|-[0-9a-z])
+  ah: 24
+  msrp: 2049
+  cat: snow
+  size: 28
+  prop: '2'
+  tags:
+  - peak
+- name: HPW2105 2100 PSI Pressure Washer Kit (6Ah)
+  match:
+  - hpw2105(?![a-z0-9]|-[0-9a-z])
+  ah: 6
+  msrp: 499
+  bare: 329
+  cat: pressure
+  size: 2100
+- name: LB6151 615CFM Blower Kit (2.5Ah)
+  match:
+  - lb6151(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 199.99
+  cat: blower
+  size: 615
+- name: LB6504 650CFM Blower Kit (5Ah)
+  match:
+  - lb6504(?![a-z0-9]|-[0-9a-z])
+  ah: 5
+  msrp: 309
+  cat: blower
+  size: 650
+- name: LB7654 765CFM Blower Kit (5Ah)
+  match:
+  - lb7654(?![a-z0-9]|-[0-9a-z])
+  ah: 5
+  msrp: 359
+  cat: blower
+  size: 765
+- name: LBPX8006-2 800CFM Backpack Blower Kit (2x10Ah)
+  match:
+  - lbpx8006\-2(?![a-z0-9])
+  ah: 20
+  msrp: 1429
+  bare: 439
+  cat: blower
+  size: 800
+  tags:
+  - peak
+- name: ST6703LB String Trimmer + Blower Combo (4Ah)
+  match:
+  - st6703lb(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 399
+- name: ST1503LB String Trimmer + Blower Combo (4Ah)
+  match:
+  - st1503lb(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 349
+- name: ST1511T 15in Powerload String Trimmer Kit (2.5Ah)
+  match:
+  - st1511t(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 219
+  cat: trimmer
+  size: 15
+- name: ST1502SA 15in Foldable String Trimmer Kit (2.5Ah)
+  match:
+  - st1502sa(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 199
+  cat: trimmer
+  size: 15
+- name: MST1603 Multi-Head String Trimmer Kit (4Ah)
+  match:
+  - mst1603(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 379
+- name: CS1201 12in Chain Saw Kit (2.5Ah)
+  match:
+  - cs1201(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 279
+  cat: chainsaw
+  size: 12
+- name: CS1611 16in Chain Saw Kit (2.5Ah)
+  match:
+  - cs1611(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 279
+  cat: chainsaw
+  size: 16
+- name: CS1613 16in Chain Saw Kit (4Ah)
+  match:
+  - cs1613(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 299.99
+  cat: chainsaw
+  size: 16
+- name: CS1803 18in Chain Saw Kit (4Ah)
+  match:
+  - cs1803(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 409
+  cat: chainsaw
+  size: 18
+- name: CS1815 18in Chain Saw Kit (6Ah)
+  match:
+  - cs1815(?![a-z0-9]|-[0-9a-z])
+  ah: 6
+  msrp: 419.99
+  cat: chainsaw
+  size: 18
+- name: CSX5007 Commercial 20in Chain Saw Kit (8Ah)
+  match:
+  - csx5007(?![a-z0-9]|-[0-9a-z])
+  ah: 8
+  msrp: 709
+  cat: chainsaw
+  size: 20
+- name: CSX3003 Commercial Top Handle Saw Kit (5Ah)
+  match:
+  - csx3003(?![a-z0-9]|-[0-9a-z])
+  ah: 5
+  msrp: 849
+- name: HT2411 24in Hedge Trimmer Kit (2.5Ah)
+  match:
+  - ht2411(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 239
+  cat: hedge
+  size: 24
+- name: HT2601 26in Hedge Trimmer Kit (2.5Ah)
+  match:
+  - ht2601(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 279
+  cat: hedge
+  size: 26
+- name: PS1001 10in Pole Saw Kit (2.5Ah)
+  match:
+  - ps1001(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 339.99
+  cat: polesaw
+  size: 10
+- name: SNS1201 12in Snow Shovel Kit (2.5Ah)
+  match:
+  - sns1201(?![a-z0-9]|-[0-9a-z])
+  ah: 2.5
+  msrp: 359
+  cat: shovel
+  size: 12
+- name: EG0803 Earth Auger Kit (4Ah)
+  match:
+  - eg0803(?![a-z0-9]|-[0-9a-z])
+  ah: 4
+  msrp: 549
+  cat: auger
+- name: MB1005-2 Mini Bike (2x7.5Ah)
+  match:
+  - mb1005\-2(?![a-z0-9])
+  ah: 15
+  msrp: 2749
