@@ -1,6 +1,6 @@
 {
   "fail_streak": {
-    "Reddit r/ToolDeals - EGO": 9,
+    "Reddit r/ToolDeals - EGO": 10,
     "Slickdeals - EGO battery": 0,
     "Slickdeals - EGO kit": 0,
     "Slickdeals - EGO power tools": 0
@@ -123,6 +123,11 @@
       "link": "https://slickdeals.net/f/20272107-ego-power-multi-head-system-with-line-iq-powerload-56-volt-17-in-straight-shaft-attachment-capable-battery-string-trimmer-edger-conversion-capable-329?utm_source=rss&utm_content=def&utm_medium=RSS2",
       "price": 329.0,
       "title": "EGO POWER+ Multi-Head System with LINE IQ, POWERLOAD 56-volt 17-in Straight Shaft Attachment Capable Battery String Trimmer Edger Conversion"
+    },
+    "thread-20302053": {
+      "link": "https://slickdeals.net/f/20302053-139-30-ego-power-530-cfm-cordless-electric-leaf-blower-w-2-5ah-battery-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 139.3,
+      "title": "$139.30* | EGO POWER+ 530 CFM Cordless Electric Leaf Blower w/ 2.5Ah Battery at Amazon"
     }
   }
 }
