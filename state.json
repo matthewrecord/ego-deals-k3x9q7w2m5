@@ -1,6 +1,6 @@
 {
   "fail_streak": {
-    "Reddit r/ToolDeals - EGO": 16,
+    "Reddit r/ToolDeals - EGO": 17,
     "Slickdeals - EGO battery": 0,
     "Slickdeals - EGO kit": 0,
     "Slickdeals - EGO power tools": 0
@@ -66,6 +66,10 @@
     "thread-20207673": {
       "price": 909.0,
       "ts": "2026-10-26T07:43:16.044676+00:00"
+    },
+    "thread-20302584": {
+      "price": 123.47,
+      "ts": "2026-11-15T08:24:09.622096+00:00"
     }
   },
   "unmatched": {
