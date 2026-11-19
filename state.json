@@ -1,6 +1,6 @@
 {
   "fail_streak": {
-    "Reddit r/ToolDeals - EGO": 30,
+    "Reddit r/ToolDeals - EGO": 31,
     "Slickdeals - EGO battery": 0,
     "Slickdeals - EGO kit": 0,
     "Slickdeals - EGO power tools": 0
@@ -141,6 +141,11 @@
       "link": "https://slickdeals.net/f/20340174-299-99-56v-ego-power-cordless-trimmer-and-blower-combo-w-4ah-battery-charger-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
       "price": 299.99,
       "title": "$299.99* | 56V EGO Power+ Cordless Trimmer and Blower Combo w/ 4Ah Battery & Charger + 10% Back w/ Prime Visa Card at Amazon"
+    },
+    "thread-20345412": {
+      "link": "https://slickdeals.net/f/20345412-ego-power-powerload-with-line-iq-56-volt-16-in-telescopic-shaft-battery-string-trimmer-4-0-ah-battery-included-charger-included-st1623t-69?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 69.0,
+      "title": "EGO POWER + POWERLOAD with LINE IQ 56-volt 16-in Telescopic Shaft Battery String Trimmer 4.0 Ah (Battery Included) (Charger Included) | ST16"
     }
   }
 }
