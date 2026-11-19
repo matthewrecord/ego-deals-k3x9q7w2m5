@@ -1,6 +1,6 @@
 {
   "fail_streak": {
-    "Reddit r/ToolDeals - EGO": 29,
+    "Reddit r/ToolDeals - EGO": 30,
     "Slickdeals - EGO battery": 0,
     "Slickdeals - EGO kit": 0,
     "Slickdeals - EGO power tools": 0
@@ -70,6 +70,10 @@
     "thread-20302584": {
       "price": 123.47,
       "ts": "2026-11-15T08:24:09.622096+00:00"
+    },
+    "thread-20340141": {
+      "price": 669.99,
+      "ts": "2026-11-19T08:43:49.078849+00:00"
     }
   },
   "unmatched": {
@@ -132,6 +136,11 @@
       "link": "https://slickdeals.net/f/20302053-139-30-ego-power-530-cfm-cordless-electric-leaf-blower-w-2-5ah-battery-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
       "price": 139.3,
       "title": "$139.30* | EGO POWER+ 530 CFM Cordless Electric Leaf Blower w/ 2.5Ah Battery at Amazon"
+    },
+    "thread-20340174": {
+      "link": "https://slickdeals.net/f/20340174-299-99-56v-ego-power-cordless-trimmer-and-blower-combo-w-4ah-battery-charger-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 299.99,
+      "title": "$299.99* | 56V EGO Power+ Cordless Trimmer and Blower Combo w/ 4Ah Battery & Charger + 10% Back w/ Prime Visa Card at Amazon"
     }
   }
 }
