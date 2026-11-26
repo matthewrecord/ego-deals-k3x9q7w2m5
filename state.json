@@ -1,6 +1,6 @@
 {
   "fail_streak": {
-    "Reddit r/ToolDeals - EGO": 52,
+    "Reddit r/ToolDeals - EGO": 53,
     "Slickdeals - EGO battery": 0,
     "Slickdeals - EGO kit": 0,
     "Slickdeals - EGO power tools": 0
@@ -161,6 +161,11 @@
       "link": "https://slickdeals.net/f/20401632-ego-power-powerload-with-line-iq-56-volt-16-in-telescopic-shaft-battery-string-trimmer-4-0-ah-battery-st1623t-199?utm_source=rss&utm_content=def&utm_medium=RSS2",
       "price": 199.0,
       "title": "EGO POWER + POWERLOAD with LINE IQ 56-volt 16-in Telescopic Shaft Battery String Trimmer 4.0 Ah Battery | ST1623T $199"
+    },
+    "thread-20402433": {
+      "link": "https://slickdeals.net/f/20402433-119-99-ego-power-portable-inverter-400w-power-inverter-generator-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 119.99,
+      "title": "$119.99* | EGO POWER+ Portable Inverter 400W Power Inverter Generator + 10% Back w/ Prime Visa Card at Amazon"
     }
   }
 }
