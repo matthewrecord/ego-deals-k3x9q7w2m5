@@ -1,6 +1,6 @@
 {
   "fail_streak": {
-    "Reddit r/ToolDeals - EGO": 54,
+    "Reddit r/ToolDeals - EGO": 55,
     "Slickdeals - EGO battery": 0,
     "Slickdeals - EGO kit": 0,
     "Slickdeals - EGO power tools": 0
@@ -76,5 +76,81 @@
       "ts": "2026-11-19T08:43:49.078849+00:00"
     }
   },
-  "unmatched": {}
+  "unmatched": {
+    "thread-19996830": {
+      "link": "https://slickdeals.net/f/19996830-149-ego-power-530-cfm-cordless-electric-leaf-blower-w-2-5ah-battery-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 149.0,
+      "title": "$149* | EGO POWER+ 530 CFM Cordless Electric Leaf Blower w/ 2.5Ah Battery at Amazon"
+    },
+    "thread-20068749": {
+      "link": "https://slickdeals.net/f/20068749-ego-power-powerload-with-carbon-fiber-shaft-56-volt-16-in-telescopic-shaft-battery-string-trimmer-2-5-ah-battery-included-charger-included-159?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 159.0,
+      "title": "EGO POWER+ POWERLOAD with Carbon Fiber Shaft 56-volt 16-in Telescopic Shaft Battery String Trimmer 2.5 Ah (Battery Included) (Charger Includ"
+    },
+    "thread-20098818": {
+      "link": "https://slickdeals.net/f/20098818-ego-power-powerload-with-line-iq-56-volt-16-in-telescopic-shaft-battery-string-trimmer-4-0-ah-battery-included-charger-included-st1623t-259?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 259.0,
+      "title": "EGO POWER + POWERLOAD with LINE IQ 56-volt 16-in Telescopic Shaft Battery String Trimmer 4.0 Ah (Battery Included) (Charger Included) | ST16"
+    },
+    "thread-20108634": {
+      "link": "https://slickdeals.net/f/20108634-prime-379-99-ego-power-multi-head-combo-kit-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 379.99,
+      "title": "[Prime] $379.99* | EGO POWER+ Multi-Head Combo Kit + 10% Back w/ Prime Visa Card at Amazon"
+    },
+    "thread-20113512": {
+      "link": "https://slickdeals.net/f/20113512-prime-246-05-ego-power-4-gallon-cordless-backpack-sprayer-bsp3500-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 246.05,
+      "title": "[Prime]$246.05: EGO Power+ 4 Gallon Cordless Backpack Sprayer - BSP3500 at Amazon"
+    },
+    "thread-20121219": {
+      "link": "https://slickdeals.net/f/20121219-prime-364-00-ego-power-multi-head-combo-kit-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 364.0,
+      "title": "[Prime] $364.00* | EGO POWER+ Multi-Head Combo Kit + 10% Back w/ Prime Visa Card at Amazon"
+    },
+    "thread-20127231": {
+      "link": "https://slickdeals.net/f/20127231-ego-power-powerload-with-line-iq-56-volt-16-in-telescopic-shaft-battery-string-trimmer-4-0-ah-battery-included-charger-included-st1623t-259?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 259.0,
+      "title": "EGO POWER + POWERLOAD with LINE IQ 56-volt 16-in Telescopic Shaft Battery String Trimmer 4.0 Ah (Battery Included) (Charger Included) | ST16"
+    },
+    "thread-20272107": {
+      "link": "https://slickdeals.net/f/20272107-ego-power-multi-head-system-with-line-iq-powerload-56-volt-17-in-straight-shaft-attachment-capable-battery-string-trimmer-edger-conversion-capable-329?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 329.0,
+      "title": "EGO POWER+ Multi-Head System with LINE IQ, POWERLOAD 56-volt 17-in Straight Shaft Attachment Capable Battery String Trimmer Edger Conversion"
+    },
+    "thread-20302053": {
+      "link": "https://slickdeals.net/f/20302053-139-30-ego-power-530-cfm-cordless-electric-leaf-blower-w-2-5ah-battery-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 139.3,
+      "title": "$139.30* | EGO POWER+ 530 CFM Cordless Electric Leaf Blower w/ 2.5Ah Battery at Amazon"
+    },
+    "thread-20340174": {
+      "link": "https://slickdeals.net/f/20340174-299-99-56v-ego-power-cordless-trimmer-and-blower-combo-w-4ah-battery-charger-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 299.99,
+      "title": "$299.99* | 56V EGO Power+ Cordless Trimmer and Blower Combo w/ 4Ah Battery & Charger + 10% Back w/ Prime Visa Card at Amazon"
+    },
+    "thread-20345412": {
+      "link": "https://slickdeals.net/f/20345412-ego-power-powerload-with-line-iq-56-volt-16-in-telescopic-shaft-battery-string-trimmer-4-0-ah-battery-included-charger-included-st1623t-69?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 69.0,
+      "title": "EGO POWER + POWERLOAD with LINE IQ 56-volt 16-in Telescopic Shaft Battery String Trimmer 4.0 Ah (Battery Included) (Charger Included) | ST16"
+    },
+    "thread-20368311": {
+      "link": "https://slickdeals.net/f/20368311-229-ego-power-16-cordless-weed-trimmer-with-battery-and-charger-st1623t-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 229.0,
+      "title": "$229 | EGO POWER+ 16\" Cordless Weed Trimmer with Battery and Charger - ST1623T + 10% Back w/ Prime Visa Card at Amazon"
+    },
+    "thread-20381958": {
+      "link": "https://slickdeals.net/f/20381958-125-37-ego-power-cordless-electric-leaf-blower-530-cfm-w-2-5-ah-battery-lb5302-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 125.37,
+      "title": "$125.37: EGO POWER+ Cordless Electric Leaf Blower, 530 CFM, w/ 2.5 Ah Battery  - LB5302 at Amazon"
+    },
+    "thread-20401632": {
+      "link": "https://slickdeals.net/f/20401632-ego-power-powerload-with-line-iq-56-volt-16-in-telescopic-shaft-battery-string-trimmer-4-0-ah-battery-st1623t-199?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 199.0,
+      "title": "EGO POWER + POWERLOAD with LINE IQ 56-volt 16-in Telescopic Shaft Battery String Trimmer 4.0 Ah Battery | ST1623T $199"
+    },
+    "thread-20402433": {
+      "link": "https://slickdeals.net/f/20402433-119-99-ego-power-portable-inverter-400w-power-inverter-generator-10-back-w-prime-visa-card-at-amazon?utm_source=rss&utm_content=def&utm_medium=RSS2",
+      "price": 119.99,
+      "title": "$119.99* | EGO POWER+ Portable Inverter 400W Power Inverter Generator + 10% Back w/ Prime Visa Card at Amazon"
+    }
+  }
 }
